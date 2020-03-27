@@ -1,5 +1,6 @@
 package com.example.ilank.bluetoothssritest;
 
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -8,6 +9,7 @@ import android.widget.TextView;
 
 import java.sql.Struct;
 import java.util.ArrayList;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -15,13 +17,16 @@ import androidx.recyclerview.widget.RecyclerView;
 public class BlueToothReadAdapter extends RecyclerView.Adapter<BlueToothReadAdapter.MyViewHolder> {
 
     private ArrayList<BluetoothRead> data;
+    private static AverageManager averageManager;
 
     public BlueToothReadAdapter() {
         data = new ArrayList<>();
+        averageManager = new AverageManager(5);
     }
 
     public BlueToothReadAdapter(ArrayList<BluetoothRead> bluetoothReads) {
         data = bluetoothReads;
+        averageManager = new AverageManager(5);
     }
 
     public void addReading(BluetoothRead bluetoothRead) {
@@ -29,10 +34,13 @@ public class BlueToothReadAdapter extends RecyclerView.Adapter<BlueToothReadAdap
         int i;
         for (i = 0; i < data.size(); i++) {
             BluetoothRead originalRead = data.get(i);
-            if (bluetoothRead.getAddress().equals(data.get(i).getAddress())) {
-                originalRead.setNumOfReads(originalRead.getNumOfReads() + 1);
-                originalRead.setTotalRssi(originalRead.getTotalRssi() + bluetoothRead.getRssi());
-                originalRead.setRssi(originalRead.getTotalRssi() / originalRead.getNumOfReads());
+            String address = bluetoothRead.getAddress();
+            if (address.equals(data.get(i).getAddress())) {
+                int retValue = averageManager.insert(address, bluetoothRead.getRssi());
+                if(retValue == -1){
+                    Log.e("ErrorTag", "Error in AverageManager.insert()");
+                }
+                originalRead.setRssi((int) averageManager.getRunningAverage(address));
                 data.set(i,originalRead);
                 notifyDataSetChanged();
                 return;

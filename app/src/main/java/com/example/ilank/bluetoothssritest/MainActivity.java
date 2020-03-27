@@ -1,16 +1,23 @@
 package com.example.ilank.bluetoothssritest;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -31,6 +38,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        final int ACCESS_CODE_COARSE_LOCATION = 1;
+        final int ACCESS_CODE_FINE_LOCATION = 2;
+
+        request_bluetooth_permissions(Manifest.permission.ACCESS_COARSE_LOCATION, ACCESS_CODE_COARSE_LOCATION);
+        request_bluetooth_permissions(Manifest.permission.ACCESS_FINE_LOCATION, ACCESS_CODE_FINE_LOCATION);
 
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view_devices);
 
@@ -82,6 +95,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void request_bluetooth_permissions(String permission, int requestCode){
+        if (ContextCompat.checkSelfPermission(this, permission)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
+                Toast.makeText(getApplicationContext(), "You should grant us location permissions in order to locate bluetooth devices!", Toast.LENGTH_LONG).show();
+            } else {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{permission},requestCode);
+            }
+        }
     }
 
     final static public class BleUtil {
